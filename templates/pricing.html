@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.pricing-wrap{max-width:1100px;margin:50px auto;padding:0 24px 40px;}
+.pricing-head{text-align:center;margin-bottom:28px;}
+.pricing-kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.pricing-title{font-family:'Playfair Display',serif;font-size:38px;line-height:1.2;margin-bottom:10px;}
+.pricing-sub{color:var(--muted);font-size:15px;max-width:700px;margin:0 auto;}
+.plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+@media(max-width:1000px){.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:640px){.plan-grid{grid-template-columns:1fr;}}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;min-height:270px;}
+.plan-card.featured{border:2px solid var(--accent);box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+.plan-name{font-family:'Playfair Display',serif;font-size:25px;margin-bottom:10px;}
+.plan-old{font-size:13px;color:var(--muted);text-decoration:line-through;min-height:20px;}
+.plan-price{font-family:'Playfair Display',serif;font-size:34px;line-height:1.1;margin-bottom:2px;}
+.plan-period{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:11px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px;}
+.plan-desc{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px;}
+.plan-cta{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:6px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px;text-transform:uppercase;}
+.plan-card.featured .plan-cta{background:var(--ink);color:#fff;border-color:var(--ink);}
+</style>
+{% endblock %}
+{% block content %}
+<section class="pricing-wrap">
+  <div class="pricing-head">
+    <div class="pricing-kicker">Subscription</div>
+    <h1 class="pricing-title">Choose Your Premium Plan</h1>
+    <p class="pricing-sub">Pick the plan that fits your reading habits. Monthly and annual plans include discounted pricing.</p>
+  </div>
+  <div class="plan-grid">
+    {% for p in plans %}
+      <div class="plan-card {% if p.highlight %}featured{% endif %}">
+        <div class="plan-name">{{ p.name }}</div>
+        <div class="plan-old">{% if p.old_price %}Rp {{ p.old_price }}{% endif %}</div>
+        <div class="plan-price">Rp {{ p.price }}</div>
+        <div class="plan-period">{{ p.period }}</div>
+        <p class="plan-desc">{{ p.description }}</p>
+        <button class="plan-cta" type="button">Select {{ p.name }}</button>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

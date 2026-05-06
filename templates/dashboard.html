@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.dash{padding:28px 32px;max-width:1200px;margin:0 auto;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 18px;}
+.stat-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.stat-value{font-family:'Playfair Display',serif;font-size:28px;color:var(--ink);}
+.section-title{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:14px;margin-top:32px;}
+.section-title:first-child{margin-top:0;}
+.tbl-wrap{overflow-x:auto;border-radius:6px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
+th{background:var(--ink);color:#fff;padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:500;white-space:nowrap;}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--ink);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--cream);}
+.msg{margin-bottom:14px;padding:10px 12px;border-radius:6px;font-size:13px;border:1px solid var(--border);background:#fff;}
+.msg.ok{border-color:#b9d7b9;background:#f2fbf2;color:#214f21;}
+.img-form{display:flex;gap:8px;align-items:center;min-width:460px;}
+.img-input{flex:1;min-width:260px;padding:7px 9px;border:1px solid var(--border);border-radius:5px;background:#fff;font-size:12px;color:var(--ink);}
+.img-input:focus{outline:none;border-color:var(--ink);}
+.img-clear{background:#fff;border:1px solid var(--border);border-radius:4px;padding:7px 8px;font-size:11px;cursor:pointer;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="dash">
+  <h2 style="font-family:'Playfair Display',serif;font-size:28px;margin-bottom:20px;">Dashboard</h2>
+  {% if article_created == 'success' %}
+    <div class="msg ok">Article has been published successfully!</div>
+  {% endif %}
+  {% if image_update == 'saved' %}
+    <div class="msg ok">Article image has been updated.</div>
+  {% elif image_update == 'not_found' %}
+    <div class="msg">Article not found.</div>
+  {% endif %}
+  <div style="margin-bottom:20px;">
+    <a href="/dashboard/articles/new" class="btn">+ Create New Article</a>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Articles</div><div class="stat-value">{{ articles|length }}</div></div>
+    <div class="stat-card"><div class="stat-label">Users</div><div class="stat-value">{{ user_stats|length }}</div></div>
+    <div class="stat-card"><div class="stat-label">Comments</div><div class="stat-value">{{ total_comments }}</div></div>
+    <div class="stat-card"><div class="stat-label">Interactions</div><div class="stat-value">{{ total_interactions }}</div></div>
+  </div>
+
+  <div class="section-title">Article Analytics</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Title</th><th>Category</th><th>Date</th>
+        <th>Views</th><th>Likes</th><th>Shares</th><th>Bookmarks</th><th>Comments</th><th>Type</th><th>Top Image URL</th>
+      </tr></thead>
+      <tbody>
+        {% for a in articles %}
+          {% set s = all_stats[a.id] %}
+          <tr>
+            <td>{{ a.id }}</td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;">
+              <a href="/article/{{ a.id }}" style="color:var(--accent);">{{ a.title }}</a>
+            </td>
+            <td>{{ a.category }}</td>
+            <td>{{ a.date }}</td>
+            <td>{{ s.views }}</td>
+            <td>{{ s.likes }}</td>
+            <td>{{ s.shares }}</td>
+            <td>{{ s.bookmarks }}</td>
+            <td>{{ all_comment_counts[a.id] }}</td>
+            <td>{% if a.premium %}<span class="premium-badge">Premium</span>{% else %}<span class="tag">Free</span>{% endif %}</td>
+            <td>
+              <form class="img-form" action="/dashboard/article/{{ a.id }}/image" method="POST">
+                <input
+                  class="img-input"
+                  type="url"
+                  name="image_url"
+                  value="{{ a.image_url or '' }}"
+                  placeholder="https://example.com/header-image.jpg"
+                />
+                <button class="btn-outline" type="submit">Save</button>
+                {% if a.image_url %}
+                  <button class="img-clear" type="submit" name="image_url" value="">Clear</button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">User Management</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Username</th><th>Email</th><th>Preferences</th><th>Interactions</th><th>Comments</th><th>Plan</th>
+      </tr></thead>
+      <tbody>
+        {% for row in user_stats %}
+          {% set u = row.user %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.username }}</td>
+            <td style="color:var(--muted);">{{ u.email }}</td>
+            <td>{{ u.preferences }}</td>
+            <td>{{ row.interactions }}</td>
+            <td>{{ row.comments }}</td>
+            <td>{% if u.premium %}<span class="premium-badge">PRO</span>{% else %}<span class="tag">Free</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

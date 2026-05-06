@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.article-wrap{max-width:760px;margin:0 auto;padding:32px 24px;}
+.back{display:inline-block;margin-bottom:24px;}
+.art-cat{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:12px;}
+.art-title{font-family:'Playfair Display',serif;font-size:38px;line-height:1.2;margin-bottom:16px;}
+.art-author{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:-6px;margin-bottom:18px;}
+.art-image-wrap{margin:0 0 22px;}
+.art-image{width:100%;display:block;border-radius:8px;border:1px solid var(--border);object-fit:cover;max-height:420px;}
+.art-meta{display:flex;align-items:center;gap:16px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:28px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+.art-body{font-size:17px;line-height:1.9;color:#2a2a28;margin-bottom:28px;}
+.art-body p{margin-bottom:1.3em;}
+.art-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:28px;}
+.interact-bar{display:flex;gap:8px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:32px;flex-wrap:wrap;}
+.comments{border-top:1px solid var(--border);padding-top:28px;}
+.comments-head{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:18px;}
+.comment-form textarea{width:100%;border:1px solid var(--border);border-radius:4px;padding:12px;font-family:'Source Serif 4',serif;font-size:14px;color:var(--ink);background:var(--paper);resize:vertical;min-height:90px;}
+.comment-form textarea:focus{outline:none;border-color:var(--ink);}
+.comment-form{margin-bottom:24px;}
+.comment-item{padding:16px 0;border-bottom:1px solid var(--border);}
+.comment-item:last-child{border-bottom:none;}
+.comment-author{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-bottom:5px;}
+.comment-ts{font-size:10px;color:var(--muted);margin-left:8px;font-weight:400;}
+.comment-text{font-size:14px;color:#3a3a38;line-height:1.65;}
+.login-notice{background:var(--cream);border:1px solid var(--border);border-radius:6px;padding:14px 18px;font-size:14px;color:var(--muted);margin-bottom:24px;}
+.login-notice a{color:var(--accent);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="article-wrap">
+  <a href="/" class="btn-outline back">← Back to feed</a>
+  <div class="art-cat">{{ article.category }}</div>
+  <h1 class="art-title">{{ article.title }}
+    {% if article.premium %}<span class="premium-badge" style="margin-left:10px;font-size:13px;vertical-align:middle;">★ Premium</span>{% endif %}
+  </h1>
+  <div class="art-author">By {{ article.author }}</div>
+  {% if article.image_url %}
+    <div class="art-image-wrap">
+      <img class="art-image" src="{{ article.image_url }}" alt="{{ article.title }}" loading="lazy" />
+    </div>
+  {% endif %}
+  <div class="art-meta">
+    <span>{{ article.date }}</span>
+    <span>{{ stats.views }} views</span>
+    <span>{{ stats.likes }} likes</span>
+    <span>{{ stats.shares }} shares</span>
+    <span>{{ stats.bookmarks }} bookmarks</span>
+  </div>
+  <div class="art-body">
+    {% for para in article_paragraphs %}
+      <p>{{ para }}</p>
+    {% endfor %}
+  </div>
+  <div class="art-tags">
+    {% for t in article.tags.split(',') %}
+      <span class="tag">{{ t.strip() }}</span>
+    {% endfor %}
+  </div>
+
+  {% if user %}
+    <div class="interact-bar">
+      <form action="/interact/{{ article.id }}/Like" method="POST" style="display:inline;">
+        <button type="submit" class="btn-outline {% if user_likes %}active{% endif %}">♥ Like ({{ stats.likes }})</button>
+      </form>
+      <form action="/interact/{{ article.id }}/Bookmark" method="POST" style="display:inline;">
+        <button type="submit" class="btn-outline {% if user_bookmarks %}active{% endif %}">⊟ Bookmark ({{ stats.bookmarks }})</button>
+      </form>
+      <form action="/interact/{{ article.id }}/Share" method="POST" style="display:inline;">
+        <button type="submit" class="btn-outline">↑ Share ({{ stats.shares }})</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="comments">
+    <div class="comments-head">Discussion ({{ comments|length }})</div>
+    {% if user %}
+      <form class="comment-form" action="/comment/{{ article.id }}" method="POST">
+        <textarea name="content" placeholder="Share your thoughts…"></textarea>
+        <button type="submit" class="btn" style="margin-top:8px;">Post comment</button>
+      </form>
+    {% else %}
+      <div class="login-notice">
+        <a href="/login">Sign in</a> to join the discussion.
+      </div>
+    {% endif %}
+    {% for c in comments %}
+      <div class="comment-item">
+        <div class="comment-author">
+          {% if c.author %}{{ c.author.username }}{% else %}Anonymous{% endif %}
+          <span class="comment-ts">{{ c.timestamp }}</span>
+        </div>
+        <div class="comment-text">{{ c.content }}</div>
+      </div>
+    {% endfor %}
+    {% if not comments %}<p style="color:var(--muted);font-size:14px;">No comments yet. Be the first!</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

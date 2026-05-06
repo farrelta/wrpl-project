@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.layout{display:grid;grid-template-columns:1fr 300px;gap:28px;padding:28px 32px;max-width:1200px;margin:0 auto;width:100%;}
+@media(max-width:800px){.layout{grid-template-columns:1fr;}}
+/* HERO */
+.hero{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;cursor:pointer;transition:box-shadow 0.2s;}
+.hero:hover{box-shadow:0 4px 18px rgba(0,0,0,0.08);}
+.hero-body{padding:28px;}
+.hero-cat{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:30px;line-height:1.25;margin-bottom:12px;}
+.hero-author{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin:-4px 0 12px;}
+.hero-excerpt{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.hero-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+/* GRID */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.grid{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;cursor:pointer;transition:all 0.15s;display:block;}
+.card:hover{box-shadow:0 3px 14px rgba(0,0,0,0.07);border-color:#ccc;}
+.card-cat{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:6px;}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;line-height:1.4;margin-bottom:8px;}
+.card-author{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:-2px;margin-bottom:8px;}
+.card-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.card-tags{margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;}
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:18px;}
+.widget{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.widget-head{background:var(--ink);color:#fff;padding:10px 16px;font-family:'Playfair Display',serif;font-size:14px;letter-spacing:0.5px;}
+.widget-body{padding:14px;}
+.trend-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.trend-item:last-child{border-bottom:none;}
+.trend-item a{display:flex;gap:10px;width:100%;transition:opacity 0.15s;}
+.trend-item a:hover{opacity:0.7;}
+.trend-num{font-family:'Playfair Display',serif;font-size:24px;color:var(--border);font-weight:700;min-width:28px;line-height:1;}
+.trend-title{font-size:13px;line-height:1.4;}
+.trend-cat{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.user-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.user-row:last-child{border-bottom:none;}
+.u-av{width:28px;height:28px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.u-name{font-size:13px;}
+.u-pref{font-size:10px;color:var(--muted);}
+.u-badge{margin-left:auto;font-size:9px;padding:2px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;}
+.u-pro{background:#fff8e1;color:var(--premium);border:1px solid #f0d060;}
+.u-free{background:var(--tag-bg);color:var(--muted);}
+.empty{color:var(--muted);padding:20px 0;font-size:14px;}
+</style>
+{% endblock %}
+{% block cat_bar %}
+<style>
+.search-form{margin-left:auto;display:flex;align-items:center;padding-right:14px;}
+.search-input{background:none;border:none;font-family:'Source Serif 4',serif;font-size:13px;color:var(--ink);padding:10px 14px;width:200px;border-bottom:2px solid transparent;transition:border-color 0.15s;}
+.search-input:focus{border-bottom-color:var(--accent);outline:none;}
+.search-input::placeholder{color:var(--muted);}
+</style>
+<div class="cat-bar">
+  {% for cat in categories %}
+    <a href="/?category={{ cat }}"><button class="cat-btn {% if cat == current_category %}active{% endif %}">{{ cat }}</button></a>
+  {% endfor %}
+  <form action="/search" method="get" class="search-form">
+    <input type="hidden" name="category" value="{{ current_category }}">
+    <input type="search" name="q" placeholder="Search articles..." class="search-input">
+  </form>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout">
+  <div>
+    {% if articles %}
+      {% set hero = articles[0] %}
+      {% set h_stats = stats[hero.id] %}
+      <a href="/article/{{ hero.id }}" class="hero">
+        <div class="hero-body">
+          <div class="hero-cat">{{ hero.category }}</div>
+          <div class="hero-title">{{ hero.title }}
+            {% if hero.premium %}<span class="premium-badge" style="margin-left:10px;font-size:11px;">★ Premium</span>{% endif %}
+          </div>
+          <div class="hero-author">By {{ hero.author }}</div>
+          <div class="hero-excerpt">{{ hero.content[:200] }}…</div>
+          <div class="hero-meta">
+            <span>{{ hero.date }}</span>
+            <span style="opacity:.4">·</span>
+            <span>{{ h_stats.views }} views</span>
+            <span style="opacity:.4">·</span>
+            <span>{{ h_stats.likes }} likes</span>
+            {% for t in hero.tags.split(',') %}
+              <span class="tag">{{ t.strip() }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </a>
+      <div class="grid">
+        {% for a in articles[1:] %}
+          {% set s = stats[a.id] %}
+          <a href="/article/{{ a.id }}" class="card">
+            <div class="card-cat">{{ a.category }}</div>
+            <div class="card-title">{{ a.title }}{% if a.premium %}<span class="premium-badge" style="margin-left:6px;font-size:9px;">★</span>{% endif %}</div>
+            <div class="card-author">By {{ a.author }}</div>
+            <div class="card-meta">{{ a.date }} · {{ s.views }}v · {{ s.likes }}♥</div>
+            <div class="card-tags">{% for t in a.tags.split(',') %}<span class="tag">{{ t.strip() }}</span>{% endfor %}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">No articles in this category.</p>
+    {% endif %}
+  </div>
+  <aside class="sidebar">
+    <div class="widget">
+      <div class="widget-head">Trending Now</div>
+      <div class="widget-body">
+        {% for a in trending %}
+          <div class="trend-item">
+            <a href="/article/{{ a.id }}">
+              <div class="trend-num">{{ "%02d"|format(loop.index) }}</div>
+              <div><div class="trend-title">{{ a.title }}</div><div class="trend-cat">{{ a.category }}</div></div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="widget">
+      <div class="widget-head">Community</div>
+      <div class="widget-body">
+        {% for u in all_users[:7] %}
+          <div class="user-row">
+            <div class="u-av">{{ u.username[:2].upper() }}</div>
+            <div><div class="u-name">{{ u.username }}</div><div class="u-pref">{{ u.preferences }}</div></div>
+            <span class="u-badge {% if u.premium %}u-pro{% else %}u-free{% endif %}">{% if u.premium %}PRO{% else %}FREE{% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
