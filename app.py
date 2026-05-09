@@ -95,6 +95,68 @@ def ensure_article_image_setup():
             conn.commit()
 
 
+def ensure_discount_tables():
+    with get_db_connection() as conn:
+        conn.executescript("""
+        CREATE TABLE IF NOT EXISTS discounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            plan TEXT NOT NULL CHECK(plan IN ('Weekly','Monthly','Annual')),
+            original_price INTEGER NOT NULL,
+            discounted_price INTEGER NOT NULL,
+            stock INTEGER NOT NULL DEFAULT 0,
+            description TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS discount_redemptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            discount_id INTEGER NOT NULL,
+            redeemed_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (discount_id) REFERENCES discounts(id) ON DELETE CASCADE
+        );
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            plan TEXT NOT NULL,
+            discount_id INTEGER,
+            price_paid INTEGER NOT NULL,
+            started_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (discount_id) REFERENCES discounts(id)
+        );
+        """)
+        conn.commit()
+
+
+def get_all_discounts():
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM discounts ORDER BY id").fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_discount(discount_id):
+    with get_db_connection() as conn:
+        row = conn.execute("SELECT * FROM discounts WHERE id = ?", (discount_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def get_discount_redemptions():
+    with get_db_connection() as conn:
+        rows = conn.execute("""
+            SELECT dr.id, dr.redeemed_at, u.username, d.name AS discount_name, d.plan
+            FROM discount_redemptions dr
+            JOIN users u ON u.id = dr.user_id
+            JOIN discounts d ON d.id = dr.discount_id
+            ORDER BY dr.id DESC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+PLAN_PRICES = {"Free": 0, "Weekly": 25000, "Monthly": 50000, "Annual": 450000}
+
+
 def get_user(user_id):
     if not user_id:
         return None
@@ -455,6 +517,186 @@ def pricing():
     return render_template("pricing.html", plans=plans, user=current_user())
 
 
+@app.route("/subscribe/<plan>")
+def subscribe_plan(plan):
+    """Step 2: user chose a plan, show available discounts for that plan."""
+    user = current_user()
+    if not user:
+        return redirect(url_for("login"))
+    if plan not in ("Weekly", "Monthly", "Annual"):
+        return redirect(url_for("pricing"))
+    discounts = get_all_discounts()
+    plan_discounts = [d for d in discounts if d["plan"] == plan]
+    plan_price = PLAN_PRICES[plan]
+    return render_template(
+        "subscribe_discounts.html",
+        plan=plan,
+        plan_price=plan_price,
+        discounts=plan_discounts,
+        user=user,
+    )
+
+
+@app.route("/subscribe/confirm", methods=["GET", "POST"])
+def subscribe_confirm():
+    """Step 3: confirm order (with or without discount)."""
+    user = current_user()
+    if not user:
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        plan = request.form.get("plan")
+        discount_id = request.form.get("discount_id") or None
+    else:
+        plan = request.args.get("plan")
+        discount_id = request.args.get("discount_id") or None
+    if plan not in ("Weekly", "Monthly", "Annual"):
+        return redirect(url_for("pricing"))
+    discount = get_discount(int(discount_id)) if discount_id else None
+    plan_price = PLAN_PRICES[plan]
+    final_price = discount["discounted_price"] if discount else plan_price
+    return render_template(
+        "subscribe_confirm.html",
+        plan=plan,
+        plan_price=plan_price,
+        discount=discount,
+        final_price=final_price,
+        user=user,
+    )
+
+
+@app.route("/subscribe/checkout", methods=["POST"])
+def subscribe_checkout():
+    """Step 4: commit purchase to DB."""
+    user = current_user()
+    if not user:
+        return redirect(url_for("login"))
+    plan = request.form.get("plan")
+    discount_id = request.form.get("discount_id") or None
+    if plan not in ("Weekly", "Monthly", "Annual"):
+        return redirect(url_for("pricing"))
+    plan_price = PLAN_PRICES[plan]
+    final_price = plan_price
+    discount = None
+    error = None
+    if discount_id:
+        discount = get_discount(int(discount_id))
+        if not discount:
+            error = "Discount not found."
+        elif discount["stock"] <= 0:
+            error = "Sorry, this discount is sold out."
+        elif discount["plan"] != plan:
+            error = "Discount does not apply to this plan."
+    if error:
+        return render_template("subscribe_error.html", error=error, user=user)
+    if discount:
+        final_price = discount["discounted_price"]
+    with get_db_connection() as conn:
+        # Atomically decrement stock & insert redemption
+        if discount:
+            updated = conn.execute(
+                "UPDATE discounts SET stock = stock - 1 WHERE id = ? AND stock > 0",
+                (discount["id"],),
+            ).rowcount
+            if updated == 0:
+                conn.rollback()
+                return render_template(
+                    "subscribe_error.html",
+                    error="Discount just sold out. Please try another.",
+                    user=user,
+                )
+            conn.execute(
+                "INSERT INTO discount_redemptions (user_id, discount_id, redeemed_at) VALUES (?, ?, ?)",
+                (user["id"], discount["id"], datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            )
+        conn.execute(
+            """INSERT INTO subscriptions (user_id, plan, discount_id, price_paid, started_at)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET
+                 plan=excluded.plan,
+                 discount_id=excluded.discount_id,
+                 price_paid=excluded.price_paid,
+                 started_at=excluded.started_at""",
+            (user["id"], plan, discount["id"] if discount else None, final_price,
+             datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        )
+        conn.execute("UPDATE users SET premium = 1 WHERE id = ?", (user["id"],))
+        conn.commit()
+    session["user_id"] = user["id"]  # refresh session
+    return redirect(url_for("subscribe_success", plan=plan))
+
+
+@app.route("/subscribe/success")
+def subscribe_success():
+    user = current_user()
+    plan = request.args.get("plan", "Premium")
+    return render_template("subscribe_success.html", plan=plan, user=user)
+
+
+# ── Admin: Discount CRUD ───────────────────────────────────────────────────────
+
+@app.route("/dashboard/discounts")
+def admin_discounts():
+    user = current_user()
+    if not user or not user.get("is_admin"):
+        return redirect(url_for("index"))
+    discounts = get_all_discounts()
+    redemptions = get_discount_redemptions()
+    return render_template(
+        "admin_discounts.html",
+        discounts=discounts,
+        redemptions=redemptions,
+        user=user,
+    )
+
+
+@app.route("/dashboard/discounts/new", methods=["POST"])
+def admin_discount_create():
+    user = current_user()
+    if not user or not user.get("is_admin"):
+        return redirect(url_for("index"))
+    name = request.form.get("name", "").strip()
+    plan = request.form.get("plan", "").strip()
+    original_price = int(request.form.get("original_price", 0))
+    discounted_price = int(request.form.get("discounted_price", 0))
+    stock = int(request.form.get("stock", 0))
+    description = request.form.get("description", "").strip()
+    with get_db_connection() as conn:
+        conn.execute(
+            """INSERT INTO discounts (name, plan, original_price, discounted_price, stock, description, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (name, plan, original_price, discounted_price, stock, description,
+             datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        )
+        conn.commit()
+    return redirect(url_for("admin_discounts", msg="created"))
+
+
+@app.route("/dashboard/discounts/<int:discount_id>/restock", methods=["POST"])
+def admin_discount_restock(discount_id):
+    user = current_user()
+    if not user or not user.get("is_admin"):
+        return redirect(url_for("index"))
+    add_stock = int(request.form.get("add_stock", 0))
+    with get_db_connection() as conn:
+        conn.execute(
+            "UPDATE discounts SET stock = stock + ? WHERE id = ?",
+            (add_stock, discount_id),
+        )
+        conn.commit()
+    return redirect(url_for("admin_discounts", msg="restocked"))
+
+
+@app.route("/dashboard/discounts/<int:discount_id>/delete", methods=["POST"])
+def admin_discount_delete(discount_id):
+    user = current_user()
+    if not user or not user.get("is_admin"):
+        return redirect(url_for("index"))
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM discounts WHERE id = ?", (discount_id,))
+        conn.commit()
+    return redirect(url_for("admin_discounts", msg="deleted"))
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
@@ -669,6 +911,7 @@ init_db_if_needed()
 ensure_user_admin_setup()
 ensure_article_author_setup()
 ensure_article_image_setup()
+ensure_discount_tables()
 
 
 if __name__ == "__main__":

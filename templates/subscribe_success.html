@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.success-wrap{max-width:520px;margin:72px auto;padding:0 24px;text-align:center;}
+.success-icon{font-size:48px;margin-bottom:20px;}
+.success-title{font-family:'Playfair Display',serif;font-size:32px;margin-bottom:10px;}
+.success-sub{color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:32px;}
+.success-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;}
+.plan-pill{display:inline-block;background:#fff8e1;color:var(--premium);font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #f0d060;margin-bottom:18px;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="success-wrap">
+  <div class="success-card">
+    <div class="success-icon">🎉</div>
+    <div class="plan-pill">{{ plan }} Plan</div>
+    <h1 class="success-title">You're all set!</h1>
+    <p class="success-sub">Your subscription is now active. Enjoy unlimited access to all premium articles on The Daily Digest.</p>
+    <a href="{{ url_for('index') }}" class="btn">Start Reading →</a>
+  </div>
+</div>
+{% endblock %}

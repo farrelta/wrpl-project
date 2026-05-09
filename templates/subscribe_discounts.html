@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.sub-wrap{max-width:860px;margin:48px auto;padding:0 24px 60px;}
+.sub-head{text-align:center;margin-bottom:36px;}
+.sub-kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.sub-title{font-family:'Playfair Display',serif;font-size:34px;margin-bottom:8px;}
+.sub-sub{color:var(--muted);font-size:14px;}
+.step-bar{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:36px;}
+.step{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+.step.active{color:var(--accent);}
+.step-num{width:24px;height:24px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.step.active .step-num{background:var(--accent);color:#fff;border-color:var(--accent);}
+.step-sep{width:40px;height:1px;background:var(--border);margin:0 6px;}
+.plan-banner{background:var(--ink);color:#fff;border-radius:8px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.plan-banner-name{font-family:'Playfair Display',serif;font-size:22px;}
+.plan-banner-price{font-family:'JetBrains Mono',monospace;font-size:14px;color:rgba(255,255,255,.6);}
+.discount-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:28px;}
+.disc-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s;}
+.disc-card:hover{border-color:var(--accent);}
+.disc-card.sold-out{opacity:.55;pointer-events:none;}
+.disc-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:3px;background:#fff8e1;color:var(--premium);border:1px solid #f0d060;}
+.disc-badge.out{background:#fce8e8;color:#b33;border-color:#f0b0b0;}
+.disc-name{font-family:'Playfair Display',serif;font-size:20px;}
+.disc-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.disc-prices{display:flex;align-items:baseline;gap:10px;}
+.disc-old{font-size:13px;color:var(--muted);text-decoration:line-through;}
+.disc-new{font-family:'Playfair Display',serif;font-size:26px;color:var(--accent);}
+.disc-stock{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.disc-stock.low{color:#c0392b;}
+.disc-cta{margin-top:auto;display:block;text-align:center;padding:10px;background:var(--ink);color:#fff;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:background .15s;}
+.disc-cta:hover{background:var(--accent);}
+.no-disc{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;}
+.no-disc-text{font-size:14px;color:var(--muted);}
+.no-disc-price{font-family:'Playfair Display',serif;font-size:22px;}
+.no-disc a{display:inline-block;padding:9px 20px;background:var(--ink);color:#fff;border-radius:5px;font-size:13px;transition:background .15s;}
+.no-disc a:hover{background:var(--accent);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="sub-wrap">
+  <div class="step-bar">
+    <div class="step"><div class="step-num">✓</div> Plan</div>
+    <div class="step-sep"></div>
+    <div class="step active"><div class="step-num">2</div> Discount</div>
+    <div class="step-sep"></div>
+    <div class="step"><div class="step-num">3</div> Confirm</div>
+    <div class="step-sep"></div>
+    <div class="step"><div class="step-num">4</div> Done</div>
+  </div>
+  <div class="sub-head">
+    <div class="sub-kicker">Step 2 of 4</div>
+    <h1 class="sub-title">Choose a Discount</h1>
+    <p class="sub-sub">These are limited-stock offers. Once slots are gone, they're gone.</p>
+  </div>
+
+  <div class="plan-banner">
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:4px;">Selected Plan</div>
+      <div class="plan-banner-name">{{ plan }}</div>
+    </div>
+    <div class="plan-banner-price">Full price: Rp {{ "{:,}".format(plan_price) }}</div>
+  </div>
+
+  {% if discounts %}
+    <div class="discount-grid">
+      {% for d in discounts %}
+        <div class="disc-card {% if d.stock == 0 %}sold-out{% endif %}">
+          {% if d.stock == 0 %}
+            <span class="disc-badge out">Sold Out</span>
+          {% elif d.stock <= 3 %}
+            <span class="disc-badge">Only {{ d.stock }} left!</span>
+          {% else %}
+            <span class="disc-badge">{{ d.stock }} slots available</span>
+          {% endif %}
+          <div class="disc-name">{{ d.name }}</div>
+          <div class="disc-desc">{{ d.description }}</div>
+          <div class="disc-prices">
+            <span class="disc-old">Rp {{ "{:,}".format(d.original_price) }}</span>
+            <span class="disc-new">Rp {{ "{:,}".format(d.discounted_price) }}</span>
+          </div>
+          <div class="disc-stock {% if d.stock <= 3 %}low{% endif %}">
+            {{ d.stock }} slot{{ 's' if d.stock != 1 else '' }} left
+          </div>
+          {% if d.stock > 0 %}
+            <a class="disc-cta" href="{{ url_for('subscribe_confirm') }}?plan={{ plan }}&discount_id={{ d.id }}">
+              Claim This Discount →
+            </a>
+          {% else %}
+            <div class="disc-cta" style="background:var(--muted);cursor:default;">Sold Out</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;">No discounts available for this plan right now.</p>
+  {% endif %}
+
+  <div class="no-disc">
+    <div>
+      <div class="no-disc-price">Rp {{ "{:,}".format(plan_price) }}</div>
+      <div class="no-disc-text">{{ plan }} plan — full price, no discount</div>
+    </div>
+    <a href="{{ url_for('subscribe_confirm') }}?plan={{ plan }}">Continue at Full Price →</a>
+  </div>
+  <div style="text-align:center;margin-top:18px;">
+    <a href="{{ url_for('pricing') }}" style="font-size:13px;color:var(--muted);">← Back to plans</a>
+  </div>
+</div>
+{% endblock %}

@@ -39,6 +39,9 @@ nav{background:var(--nav);color:#fff;padding:0 32px;display:flex;align-items:cen
 .btn-outline.active{border-color:var(--accent);color:var(--accent);}
 /* FOOTER */
 footer{background:var(--nav);color:rgba(255,255,255,0.4);text-align:center;padding:18px;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:auto;letter-spacing:0.5px;}
+.nav-subscribe-btn{background:var(--accent)!important;color:#fff!important;border-radius:4px;padding:5px 13px!important;font-size:12px!important;font-family:'JetBrains Mono',monospace;letter-spacing:.4px;transition:opacity .15s!important;}
+.nav-subscribe-btn:hover{opacity:.85;background:var(--accent)!important;}
+.nav-premium-badge{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.6px;color:#f0d060;padding:5px 10px;border:1px solid rgba(240,208,96,.35);border-radius:4px;white-space:nowrap;}
 </style>
 {% block extra_style %}{% endblock %}
 </head>
@@ -50,6 +53,14 @@ footer{background:var(--nav);color:rgba(255,255,255,0.4);text-align:center;paddi
       <a href="/">Home</a>
       {% if user and user.is_admin %}
         <a href="/dashboard">Dashboard</a>
+        <a href="/dashboard/discounts">Discounts</a>
+      {% endif %}
+      {% if user and not user.is_admin %}
+        {% if user.premium %}
+          <span class="nav-premium-badge">★ Premium Active</span>
+        {% else %}
+          <a href="/pricing" class="nav-subscribe-btn">Subscribe</a>
+        {% endif %}
       {% endif %}
     </div>
   </div>

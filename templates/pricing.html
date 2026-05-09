@@ -35,7 +35,10 @@
         <div class="plan-price">Rp {{ p.price }}</div>
         <div class="plan-period">{{ p.period }}</div>
         <p class="plan-desc">{{ p.description }}</p>
-        <button class="plan-cta" type="button">Select {{ p.name }}</button>
+        <a class="plan-cta {% if p.highlight %}featured-cta{% endif %}" 
+           href="{% if p.name == 'Free' %}{{ url_for('index') }}{% else %}{{ url_for('subscribe_plan', plan=p.name) }}{% endif %}">
+          {{ 'Continue Free' if p.name == 'Free' else 'Select ' + p.name }}
+        </a>
       </div>
     {% endfor %}
   </div>
