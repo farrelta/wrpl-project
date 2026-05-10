@@ -907,6 +907,101 @@ def dashboard():
     )
 
 
+@app.route("/dashboard/analytics")
+def admin_analytics():
+    user = current_user()
+    if not user or not user.get("is_admin"):
+        return redirect(url_for("login"))
+
+    with get_db_connection() as conn:
+        # Views per article
+        views_rows = conn.execute(
+            """
+            SELECT a.title, COUNT(i.id) AS views
+            FROM articles a
+            LEFT JOIN interactions i ON i.article_id = a.id AND i.type = 'View'
+            GROUP BY a.id
+            ORDER BY views DESC
+            """
+        ).fetchall()
+
+        # Comments per article
+        comments_rows = conn.execute(
+            """
+            SELECT a.title, COUNT(c.id) AS comments
+            FROM articles a
+            LEFT JOIN comments c ON c.article_id = a.id
+            GROUP BY a.id
+            ORDER BY comments DESC
+            """
+        ).fetchall()
+
+        # Interactions by type (pie)
+        interaction_type_rows = conn.execute(
+            "SELECT type, COUNT(*) AS total FROM interactions GROUP BY type"
+        ).fetchall()
+
+        # Views by category
+        category_views_rows = conn.execute(
+            """
+            SELECT a.category, COUNT(i.id) AS views
+            FROM articles a
+            LEFT JOIN interactions i ON i.article_id = a.id AND i.type = 'View'
+            GROUP BY a.category
+            ORDER BY views DESC
+            """
+        ).fetchall()
+
+        # Top 5 most liked articles
+        likes_rows = conn.execute(
+            """
+            SELECT a.title, COUNT(i.id) AS likes
+            FROM articles a
+            LEFT JOIN interactions i ON i.article_id = a.id AND i.type = 'Like'
+            GROUP BY a.id
+            ORDER BY likes DESC
+            LIMIT 5
+            """
+        ).fetchall()
+
+        # User activity: comments + interactions per user
+        user_activity_rows = conn.execute(
+            """
+            SELECT u.username,
+                   COUNT(DISTINCT i.id) AS interactions,
+                   COUNT(DISTINCT c.id) AS comments
+            FROM users u
+            LEFT JOIN interactions i ON i.user_id = u.id
+            LEFT JOIN comments c ON c.user_id = u.id
+            GROUP BY u.id
+            ORDER BY (COUNT(DISTINCT i.id) + COUNT(DISTINCT c.id)) DESC
+            LIMIT 8
+            """
+        ).fetchall()
+
+        total_views = conn.execute(
+            "SELECT COUNT(*) AS c FROM interactions WHERE type='View'"
+        ).fetchone()["c"]
+        total_comments = conn.execute("SELECT COUNT(*) AS c FROM comments").fetchone()["c"]
+        total_articles = conn.execute("SELECT COUNT(*) AS c FROM articles").fetchone()["c"]
+        total_users = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"]
+
+    return render_template(
+        "analytics.html",
+        user=user,
+        views_data=rows_to_dicts(views_rows),
+        comments_data=rows_to_dicts(comments_rows),
+        interaction_type_data=rows_to_dicts(interaction_type_rows),
+        category_views_data=rows_to_dicts(category_views_rows),
+        likes_data=rows_to_dicts(likes_rows),
+        user_activity_data=rows_to_dicts(user_activity_rows),
+        total_views=total_views,
+        total_comments=total_comments,
+        total_articles=total_articles,
+        total_users=total_users,
+    )
+
+
 init_db_if_needed()
 ensure_user_admin_setup()
 ensure_article_author_setup()
