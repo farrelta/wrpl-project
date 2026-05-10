@@ -54,6 +54,7 @@ footer{background:var(--nav);color:rgba(255,255,255,0.4);text-align:center;paddi
       {% if user and user.is_admin %}
         <a href="/dashboard">Dashboard</a>
         <a href="/dashboard/discounts">Discounts</a>
+        <a href="/dashboard/analytics">Analytics</a>
       {% endif %}
       {% if user and not user.is_admin %}
         {% if user.premium %}
