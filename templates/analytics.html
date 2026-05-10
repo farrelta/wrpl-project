@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block extra_style %}
+<style>
+.analytics-wrap {
+  padding: 28px 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.analytics-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.analytics-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+}
+.analytics-header span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Stat cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+@media(max-width:700px){ .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+.kpi-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+.kpi-card.blue::before  { background: #3b82f6; }
+.kpi-card.green::before { background: #22c55e; }
+.kpi-card.amber::before { background: #f59e0b; }
+.kpi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  color: var(--ink);
+  line-height: 1;
+}
+.kpi-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 28px;
+  opacity: 0.12;
+}
+
+/* Chart grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width:900px){ .charts-grid { grid-template-columns: 1fr; } }
+.chart-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.chart-card.wide {
+  grid-column: 1 / -1;
+}
+.chart-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+.chart-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.chart-container {
+  position: relative;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-wrap">
+
+  <div class="analytics-header">
+    <h2>Analytics</h2>
+    <span>Admin View</span>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Views</div>
+      <div class="kpi-value">{{ total_views }}</div>
+      <div class="kpi-icon">👁</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total Comments</div>
+      <div class="kpi-value">{{ total_comments }}</div>
+      <div class="kpi-icon">💬</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Total Articles</div>
+      <div class="kpi-value">{{ total_articles }}</div>
+      <div class="kpi-icon">📰</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Registered Users</div>
+      <div class="kpi-value">{{ total_users }}</div>
+      <div class="kpi-icon">👤</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <!-- 1. Views per article (horizontal bar) — wide -->
+    <div class="chart-card wide">
+      <div class="chart-title">Views per Article</div>
+      <div class="chart-subtitle">Total read count for each published article</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="viewsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 2. Comments per article (bar) -->
+    <div class="chart-card">
+      <div class="chart-title">Comments per Article</div>
+      <div class="chart-subtitle">Number of comments received</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="commentsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 3. Interaction type breakdown (doughnut) -->
+    <div class="chart-card">
+      <div class="chart-title">Interaction Breakdown</div>
+      <div class="chart-subtitle">Views · Likes · Bookmarks · Shares</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="interactionTypeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 4. Views by category (polar area) -->
+    <div class="chart-card">
+      <div class="chart-title">Views by Category</div>
+      <div class="chart-subtitle">Which topics attract the most readers</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 5. Top 5 most liked articles (bar) -->
+    <div class="chart-card">
+      <div class="chart-title">Top 5 Most Liked Articles</div>
+      <div class="chart-subtitle">Articles with the highest like count</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="likesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 6. User activity (stacked bar) — wide -->
+    <div class="chart-card wide">
+      <div class="chart-title">User Activity</div>
+      <div class="chart-subtitle">Interactions and comments per user (top 8)</div>
+      <div class="chart-container" style="height:240px;">
+        <canvas id="userActivityChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Chart.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  // ── Shared palette ──────────────────────────────────────────────
+  const ACCENT   = '#c0392b';
+  const BLUE     = '#3b82f6';
+  const GREEN    = '#22c55e';
+  const AMBER    = '#f59e0b';
+  const PURPLE   = '#8b5cf6';
+  const TEAL     = '#14b8a6';
+  const SLATE    = '#64748b';
+  const INK      = '#1a1a18';
+  const BORDER   = '#e0ddd4';
+  const MUTED    = '#7a7a72';
+
+  Chart.defaults.font.family = "'Source Serif 4', serif";
+  Chart.defaults.color = MUTED;
+
+  function shortTitle(t, max = 28) {
+    return t.length > max ? t.slice(0, max) + '…' : t;
+  }
+
+  // ── 1. Views per article (horizontal bar) ───────────────────────
+  const viewsData = {{ views_data | tojson }};
+  new Chart(document.getElementById('viewsChart'), {
+    type: 'bar',
+    data: {
+      labels: viewsData.map(d => shortTitle(d.title)),
+      datasets: [{
+        label: 'Views',
+        data: viewsData.map(d => d.views),
+        backgroundColor: viewsData.map((_, i) =>
+          i === 0 ? ACCENT : `rgba(192,57,43,${0.55 - i * 0.04})`
+        ),
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} views` } }
+      },
+      scales: {
+        x: { grid: { color: BORDER }, ticks: { stepSize: 1 } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── 2. Comments per article ──────────────────────────────────────
+  const commentsData = {{ comments_data | tojson }};
+  new Chart(document.getElementById('commentsChart'), {
+    type: 'bar',
+    data: {
+      labels: commentsData.map(d => shortTitle(d.title, 20)),
+      datasets: [{
+        label: 'Comments',
+        data: commentsData.map(d => d.comments),
+        backgroundColor: BLUE,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} comments` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxRotation: 30, font: { size: 10 } } },
+        y: { grid: { color: BORDER }, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  // ── 3. Interaction type doughnut ─────────────────────────────────
+  const intTypeData = {{ interaction_type_data | tojson }};
+  new Chart(document.getElementById('interactionTypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: intTypeData.map(d => d.type),
+      datasets: [{
+        data: intTypeData.map(d => d.total),
+        backgroundColor: [ACCENT, BLUE, GREEN, AMBER],
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { boxWidth: 12, padding: 14 }
+        },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } }
+      }
+    }
+  });
+
+  // ── 4. Views by category (polar area) ───────────────────────────
+  const catData = {{ category_views_data | tojson }};
+  const catColors = [ACCENT, BLUE, GREEN, AMBER, PURPLE, TEAL, SLATE, INK];
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'polarArea',
+    data: {
+      labels: catData.map(d => d.category),
+      datasets: [{
+        data: catData.map(d => d.views),
+        backgroundColor: catColors.slice(0, catData.length).map(c => c + 'cc'),
+        borderColor: catColors.slice(0, catData.length),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+        }
+      },
+      scales: {
+        r: { grid: { color: BORDER }, ticks: { display: false } }
+      }
+    }
+  });
+
+  // ── 5. Top 5 liked articles ──────────────────────────────────────
+  const likesData = {{ likes_data | tojson }};
+  new Chart(document.getElementById('likesChart'), {
+    type: 'bar',
+    data: {
+      labels: likesData.map(d => shortTitle(d.title, 22)),
+      datasets: [{
+        label: 'Likes',
+        data: likesData.map(d => d.likes),
+        backgroundColor: [AMBER, AMBER + 'cc', AMBER + 'aa', AMBER + '88', AMBER + '66'],
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} likes` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 20 } },
+        y: { grid: { color: BORDER }, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  // ── 6. User activity stacked bar ─────────────────────────────────
+  const userActivityData = {{ user_activity_data | tojson }};
+  new Chart(document.getElementById('userActivityChart'), {
+    type: 'bar',
+    data: {
+      labels: userActivityData.map(d => d.username),
+      datasets: [
+        {
+          label: 'Interactions',
+          data: userActivityData.map(d => d.interactions),
+          backgroundColor: ACCENT,
+          borderRadius: 3,
+          stack: 'activity',
+        },
+        {
+          label: 'Comments',
+          data: userActivityData.map(d => d.comments),
+          backgroundColor: BLUE,
+          borderRadius: 3,
+          stack: 'activity',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12 } },
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, grid: { color: BORDER }, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+</script>
+{% endblock %}
