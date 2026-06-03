@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ticketing_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build: ./user-service
+    container_name: user_service
+    ports:
+      - "8001:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@mysql:3306/user_db
+
+  event-service:
+    build: ./event-service
+    container_name: event_service
+    ports:
+      - "8002:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@mysql:3306/event_db
+
+  booking-payment-service:
+    build: ./booking-payment-service
+    container_name: booking_payment_service
+    ports:
+      - "8003:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@mysql:3306/booking_db
+      - EVENT_SERVICE_URL=http://event-service:8000
+      - TICKET_SERVICE_URL=http://ticket-review-service:8000
+
+  ticket-review-service:
+    build: ./ticket-review-service
+    container_name: ticket_review_service
+    ports:
+      - "8004:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@mysql:3306/ticket_db
+
+  api-gateway:
+    build: ./gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user-service
+      - event-service
+      - booking-payment-service
+      - ticket-review-service
+    environment:
+      - USER_SERVICE_URL=http://user-service:8000
+      - EVENT_SERVICE_URL=http://event-service:8000
+      - BOOKING_SERVICE_URL=http://booking-payment-service:8000
+      - TICKET_SERVICE_URL=http://ticket-review-service:8000
+
+  frontend:
+    build: ./frontend-streamlit
+    container_name: frontend_streamlit
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api-gateway
+    environment:
+      - GATEWAY_URL=http://api-gateway:8000
+
+volumes:
+  mysql_data:
