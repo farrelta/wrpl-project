@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}All Users — TicketHub Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-title">Administration</div>
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_events') }}">🎭 Events</a>
+            <a href="{{ url_for('admin_bookings') }}">🎟️ Bookings</a>
+            <a href="{{ url_for('admin_users') }}" class="active">👥 Users</a>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                <a href="{{ url_for('index') }}">← Back to Site</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="admin-main">
+            <h1 class="page-title fade-in-up">👥 All Users</h1>
+            <p class="page-subtitle fade-in-up">View all registered users on the platform.</p>
+
+            {% if users %}
+                <div class="table-wrapper fade-in-up">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Bookings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>#{{ user.id }}</td>
+                                    <td>
+                                        <div class="d-flex align-center gap-1">
+                                            <div class="review-avatar" style="width:32px;height:32px;font-size:0.8rem;">{{ user.username[0] | upper }}</div>
+                                            <strong>{{ user.username }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                            <span class="badge badge-admin">Admin</span>
+                                        {% else %}
+                                            <span class="badge badge-confirmed">User</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                                    <td>{{ user.bookings | length }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state fade-in-up">
+                    <div class="empty-icon">👥</div>
+                    <h3>No users yet</h3>
+                    <p>Users will appear here when they register.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

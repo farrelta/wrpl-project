@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}TicketHub — Discover Amazing Events{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero -->
+    <section class="hero fade-in-up">
+        <h1>Discover <span class="gradient-text">Amazing Events</span></h1>
+        <p>Browse upcoming concerts, workshops, conferences and more. Book your tickets in seconds.</p>
+    </section>
+
+    <!-- Search -->
+    <form class="search-bar fade-in-up" method="GET" action="{{ url_for('index') }}">
+        <input type="text" name="q" class="form-control" placeholder="🔍  Search events by name..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Events Grid -->
+    {% if events %}
+        <div class="events-grid">
+            {% for event in events %}
+                <a href="{{ url_for('event_detail', event_id=event.id) }}" style="text-decoration:none; color:inherit;">
+                    <div class="card event-card" data-animate>
+                        {% if event.image_url %}
+                            <img src="{{ event.image_url }}" alt="{{ event.name }}" class="event-image">
+                        {% else %}
+                            <div class="event-image" style="background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.15)); display:flex; align-items:center; justify-content:center; font-size:3rem; margin:-24px -24px 16px -24px; width:calc(100% + 48px); height:200px; border-radius:var(--radius-md) var(--radius-md) 0 0;">🎫</div>
+                        {% endif %}
+                        <div class="event-meta">
+                            <span>📅 {{ event.date.strftime('%b %d, %Y') }}</span>
+                            <span>📍 {{ event.location }}</span>
+                        </div>
+                        <h3 class="event-title">{{ event.name }}</h3>
+                        <p class="event-description">{{ event.description or 'No description available.' }}</p>
+                        <div class="event-footer">
+                            <span class="event-price">${{ '%.2f' % event.price }}</span>
+                            {% if event.available_seats == 0 %}
+                                <span class="event-seats sold-out">Sold Out</span>
+                            {% elif event.available_seats <= 10 %}
+                                <span class="event-seats low">🔥 {{ event.available_seats }} seats left</span>
+                            {% else %}
+                                <span class="event-seats">{{ event.available_seats }} seats available</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state fade-in-up">
+            <div class="empty-icon">🎭</div>
+            <h3>No events found</h3>
+            {% if search %}
+                <p>No results for "{{ search }}". Try a different search term.</p>
+            {% else %}
+                <p>There are no upcoming events right now. Check back soon!</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

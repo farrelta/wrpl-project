@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Events — TicketHub Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-title">Administration</div>
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_events') }}" class="active">🎭 Events</a>
+            <a href="{{ url_for('admin_bookings') }}">🎟️ Bookings</a>
+            <a href="{{ url_for('admin_users') }}">👥 Users</a>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                <a href="{{ url_for('index') }}">← Back to Site</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="admin-main">
+            <div class="section-header fade-in-up">
+                <div>
+                    <h1 class="page-title">🎭 Manage Events</h1>
+                    <p class="page-subtitle" style="margin-bottom: 0;">Create, edit, and delete events.</p>
+                </div>
+                <a href="{{ url_for('admin_add_event') }}" class="btn btn-primary">+ Add Event</a>
+            </div>
+
+            {% if events %}
+                <div class="table-wrapper fade-in-up">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Price</th>
+                                <th>Seats</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                                <tr>
+                                    <td>#{{ event.id }}</td>
+                                    <td><strong>{{ event.name }}</strong></td>
+                                    <td>{{ event.date.strftime('%b %d, %Y') }}</td>
+                                    <td>{{ event.location }}</td>
+                                    <td>${{ '%.2f' % event.price }}</td>
+                                    <td>{{ event.available_seats }}/{{ event.total_seats }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ url_for('admin_edit_event', event_id=event.id) }}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+                                            <form id="delete-form-{{ event.id }}" method="POST" action="{{ url_for('admin_delete_event', event_id=event.id) }}" style="display:inline;">
+                                                <button type="button" onclick="confirmDelete({{ event.id }})" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state fade-in-up">
+                    <div class="empty-icon">🎭</div>
+                    <h3>No events yet</h3>
+                    <p>Create your first event to get started.</p>
+                    <a href="{{ url_for('admin_add_event') }}" class="btn btn-primary mt-3">+ Add Event</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

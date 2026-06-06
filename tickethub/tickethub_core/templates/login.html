@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Login — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-wrapper">
+        <div class="card card-glass auth-card fade-in-up">
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-subtitle">Sign in to your TicketHub account</p>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">Sign In</button>
+            </form>
+
+            <p class="text-center mt-3" style="color: var(--text-secondary); font-size: 0.9rem;">
+                Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

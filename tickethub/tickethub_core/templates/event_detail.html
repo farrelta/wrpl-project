@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.name }} — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Event Header -->
+    <div class="event-detail-header fade-in-up">
+        <div>
+            {% if event.image_url %}
+                <img src="{{ event.image_url }}" alt="{{ event.name }}" class="event-detail-image">
+            {% else %}
+                <div class="event-detail-image-placeholder">🎫</div>
+            {% endif %}
+        </div>
+        <div class="event-detail-info">
+            <h1>{{ event.name }}</h1>
+
+            <div class="event-detail-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    {{ event.date.strftime('%A, %B %d, %Y at %I:%M %p') }}
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📍</span>
+                    {{ event.location }}
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">💺</span>
+                    {% if event.available_seats == 0 %}
+                        <span style="color: var(--error);">Sold Out</span>
+                    {% elif event.available_seats <= 10 %}
+                        <span style="color: var(--warning);">🔥 Only {{ event.available_seats }} seats left!</span>
+                    {% else %}
+                        {{ event.available_seats }} of {{ event.total_seats }} seats available
+                    {% endif %}
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">⭐</span>
+                    {% if event.avg_rating > 0 %}
+                        {{ event.avg_rating }} / 5
+                        <span class="stars" style="margin-left: 4px;">
+                            {% for i in range(1, 6) %}
+                                <span class="star {{ 'filled' if i <= event.avg_rating else '' }}">★</span>
+                            {% endfor %}
+                        </span>
+                        ({{ event.reviews | length }} review{{ 's' if event.reviews | length != 1 }})
+                    {% else %}
+                        No reviews yet
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="event-detail-price">${{ '%.2f' % event.price }}</div>
+
+            {% if event.description %}
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7;">{{ event.description }}</p>
+            {% endif %}
+
+            <!-- Booking Form -->
+            {% if current_user.is_authenticated %}
+                {% if event.available_seats > 0 %}
+                    <form method="POST" action="{{ url_for('book_event', event_id=event.id) }}" class="booking-form">
+                        <div class="form-group">
+                            <label class="form-label" for="quantity">Tickets</label>
+                            <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" max="{{ event.available_seats }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">🎟️ Book Now</button>
+                    </form>
+                {% else %}
+                    <button class="btn btn-secondary btn-lg" disabled>Sold Out</button>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">🔑 Login to Book</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section">
+        <div class="section-header">
+            <h2>Reviews & Ratings</h2>
+        </div>
+
+        <!-- Review Form -->
+        {% if current_user.is_authenticated and user_has_booking and not user_has_reviewed %}
+            <div class="card review-form-card fade-in-up">
+                <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Leave a Review</h3>
+                <form method="POST" action="{{ url_for('submit_review', event_id=event.id) }}">
+                    <div class="form-group">
+                        <label class="form-label">Your Rating</label>
+                        <div class="star-rating-input">
+                            {% for i in range(5, 0, -1) %}
+                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {{ 'checked' if i == 5 }}>
+                                <label for="star{{ i }}">★</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="comment">Comment (optional)</label>
+                        <textarea id="comment" name="comment" class="form-control" rows="3" placeholder="Tell us about your experience..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- Reviews List -->
+        {% if reviews %}
+            {% for review in reviews %}
+                <div class="card review-card fade-in-up">
+                    <div class="review-avatar">{{ review.user.username[0] | upper }}</div>
+                    <div class="review-content">
+                        <div class="review-header">
+                            <span class="review-author">{{ review.user.username }}</span>
+                            <span class="stars">
+                                {% for i in range(1, 6) %}
+                                    <span class="star {{ 'filled' if i <= review.rating else '' }}">★</span>
+                                {% endfor %}
+                            </span>
+                            <span class="review-date">{{ review.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        {% if review.comment %}
+                            <p class="review-text">{{ review.comment }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="padding: 40px;">
+                <div class="empty-icon">💬</div>
+                <h3>No reviews yet</h3>
+                <p>Be the first to share your experience!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

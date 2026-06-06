@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-title">Administration</div>
+            <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.endpoint == 'admin_dashboard' }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_events') }}" class="{{ 'active' if 'event' in request.endpoint and 'admin' in request.endpoint }}">🎭 Events</a>
+            <a href="{{ url_for('admin_bookings') }}" class="{{ 'active' if request.endpoint == 'admin_bookings' }}">🎟️ Bookings</a>
+            <a href="{{ url_for('admin_users') }}" class="{{ 'active' if request.endpoint == 'admin_users' }}">👥 Users</a>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                <a href="{{ url_for('index') }}">← Back to Site</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="admin-main">
+            <h1 class="page-title fade-in-up">📊 Dashboard</h1>
+            <p class="page-subtitle fade-in-up">Overview of your TicketHub platform performance.</p>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="card stat-card fade-in-up stagger-1">
+                    <span class="stat-icon">💰</span>
+                    <div class="stat-value">${{ '%.2f' % total_revenue }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="card stat-card fade-in-up stagger-2">
+                    <span class="stat-icon">🎟️</span>
+                    <div class="stat-value">{{ total_tickets_sold }}</div>
+                    <div class="stat-label">Tickets Sold</div>
+                </div>
+                <div class="card stat-card fade-in-up stagger-3">
+                    <span class="stat-icon">🎭</span>
+                    <div class="stat-value">{{ total_events }}</div>
+                    <div class="stat-label">Total Events</div>
+                </div>
+                <div class="card stat-card fade-in-up stagger-4">
+                    <span class="stat-icon">👥</span>
+                    <div class="stat-value">{{ total_users }}</div>
+                    <div class="stat-label">Registered Users</div>
+                </div>
+            </div>
+
+            <!-- Two-column: Upcoming Events + Recent Bookings -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <!-- Upcoming Events -->
+                <div class="fade-in-up stagger-5">
+                    <div class="section-header">
+                        <h2>Upcoming Events</h2>
+                        <a href="{{ url_for('admin_events') }}" class="btn btn-secondary btn-sm">View All</a>
+                    </div>
+                    {% if upcoming_events %}
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                        <th>Seats</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in upcoming_events %}
+                                        <tr>
+                                            <td><strong>{{ event.name }}</strong></td>
+                                            <td>{{ event.date.strftime('%b %d') }}</td>
+                                            <td>{{ event.available_seats }}/{{ event.total_seats }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="card" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                            No upcoming events
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Bookings -->
+                <div class="fade-in-up stagger-6">
+                    <div class="section-header">
+                        <h2>Recent Bookings</h2>
+                        <a href="{{ url_for('admin_bookings') }}" class="btn btn-secondary btn-sm">View All</a>
+                    </div>
+                    {% if recent_bookings %}
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Event</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                        <tr>
+                                            <td>{{ booking.user.username }}</td>
+                                            <td>{{ booking.event.name }}</td>
+                                            <td><span class="badge badge-{{ booking.status }}">{{ booking.status }}</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="card" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                            No bookings yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

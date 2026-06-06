@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title fade-in-up">🎟️ My Bookings</h1>
+    <p class="page-subtitle fade-in-up">Manage your event tickets and view booking history.</p>
+
+    {% if bookings %}
+        {% for booking in bookings %}
+            <div class="card booking-card fade-in-up">
+                <div class="booking-event">
+                    <h3>
+                        <a href="{{ url_for('event_detail', event_id=booking.event.id) }}">{{ booking.event.name }}</a>
+                    </h3>
+                    <div class="booking-meta">
+                        📅 {{ booking.event.date.strftime('%b %d, %Y') }}
+                        · 📍 {{ booking.event.location }}
+                        · 🎫 {{ booking.quantity }} ticket{{ 's' if booking.quantity != 1 }}
+                        · Booked {{ booking.booked_at.strftime('%b %d, %Y') }}
+                    </div>
+                </div>
+                <div>
+                    <span class="badge badge-{{ booking.status }}">{{ booking.status }}</span>
+                </div>
+                <div class="booking-price">${{ '%.2f' % booking.total_price }}</div>
+                <div class="booking-actions">
+                    {% if booking.status == 'confirmed' %}
+                        <form id="cancel-form-{{ booking.id }}" method="POST" action="{{ url_for('cancel_booking', booking_id=booking.id) }}" style="display:inline;">
+                            <button type="button" onclick="confirmCancel({{ booking.id }})" class="btn btn-danger btn-sm">Cancel</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state fade-in-up">
+            <div class="empty-icon">🎫</div>
+            <h3>No bookings yet</h3>
+            <p>Start exploring events and book your first ticket!</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Browse Events</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

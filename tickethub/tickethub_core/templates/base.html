@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TicketHub — Discover and book amazing events. Premium ticket booking platform.">
+    <title>{% block title %}TicketHub{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="container">
+                <a href="{{ url_for('index') }}" class="navbar-brand">
+                    <span class="brand-icon">🎫</span>
+                    TicketHub
+                </a>
+                <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+                <ul class="navbar-nav">
+                    <li><a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">🏠 Events</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('my_bookings') }}" class="{{ 'active' if request.endpoint == 'my_bookings' }}">🎟️ My Bookings</a></li>
+                        {% if current_user.is_admin %}
+                            <li class="nav-divider"></li>
+                            <li><a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if 'admin' in request.endpoint }}">⚙️ Admin</a></li>
+                        {% endif %}
+                        <li class="nav-divider"></li>
+                        <li><a href="{{ url_for('logout') }}">👋 Logout</a></li>
+                    {% else %}
+                        <li class="nav-divider"></li>
+                        <li><a href="{{ url_for('login') }}" class="{{ 'active' if request.endpoint == 'login' }}">🔑 Login</a></li>
+                        <li><a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Sign Up</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container">
+                    {% for category, message in messages %}
+                        <div class="toast toast-{{ category }}">
+                            <span class="toast-icon">
+                                {% if category == 'success' %}✅
+                                {% elif category == 'error' %}❌
+                                {% elif category == 'warning' %}⚠️
+                                {% else %}ℹ️{% endif %}
+                            </span>
+                            <span class="toast-message">{{ message }}</span>
+                            <button class="toast-close">✕</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% if error_code is defined and error_code %}
+                <div class="container">
+                    <div class="error-page">
+                        <div class="error-code">{{ error_code }}</div>
+                        <p class="error-message">{{ error_msg }}</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">← Back to Events</a>
+                    </div>
+                </div>
+            {% else %}
+                {% block content %}{% endblock %}
+            {% endif %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>© 2026 <a href="{{ url_for('index') }}">TicketHub</a> · Premium Event Ticketing · Powered by PayVault</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

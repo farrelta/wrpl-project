@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}All Bookings — TicketHub Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-title">Administration</div>
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_events') }}">🎭 Events</a>
+            <a href="{{ url_for('admin_bookings') }}" class="active">🎟️ Bookings</a>
+            <a href="{{ url_for('admin_users') }}">👥 Users</a>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                <a href="{{ url_for('index') }}">← Back to Site</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="admin-main">
+            <h1 class="page-title fade-in-up">🎟️ All Bookings</h1>
+            <p class="page-subtitle fade-in-up">View and manage all ticket bookings across events.</p>
+
+            {% if bookings %}
+                <div class="table-wrapper fade-in-up">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Event</th>
+                                <th>Qty</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Txn ID</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td>#{{ booking.id }}</td>
+                                    <td>{{ booking.user.username }}</td>
+                                    <td>{{ booking.event.name }}</td>
+                                    <td>{{ booking.quantity }}</td>
+                                    <td>${{ '%.2f' % booking.total_price }}</td>
+                                    <td><span class="badge badge-{{ booking.status }}">{{ booking.status }}</span></td>
+                                    <td>{{ booking.transaction_id or '—' }}</td>
+                                    <td>{{ booking.booked_at.strftime('%b %d, %Y') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state fade-in-up">
+                    <div class="empty-icon">🎟️</div>
+                    <h3>No bookings yet</h3>
+                    <p>Bookings will appear here when users start purchasing tickets.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
