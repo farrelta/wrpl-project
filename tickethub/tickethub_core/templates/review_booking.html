@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Review Booking — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="confirmation-page fade-in-up">
+        <div class="confirmation-icon">
+            <div style="font-size: 4rem;">❓</div>
+        </div>
+
+        <h1 class="confirmation-title">Confirm <span class="gradient-text">Purchase</span></h1>
+        <p class="confirmation-subtitle">Are you sure you want to proceed with this booking?</p>
+
+        <div class="confirmation-card">
+            <div class="confirmation-details">
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">🎭</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Event</span>
+                        <span class="detail-value">{{ event.name }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">🎟️</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Tickets</span>
+                        <span class="detail-value">{{ quantity }} ticket{{ 's' if quantity != 1 }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row total-row">
+                    <span class="detail-icon">💳</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Total Price</span>
+                        <span class="detail-value detail-price">${{ '%.2f' % total_price }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="confirmation-actions">
+            <form method="POST" action="{{ url_for('book_event', event_id=event.id) }}" style="display:inline-block; margin: 0;">
+                <input type="hidden" name="quantity" value="{{ quantity }}">
+                <button type="submit" class="btn btn-primary btn-lg">✅ Yes, Book Tickets</button>
+            </form>
+            <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-secondary btn-lg">❌ No, Cancel</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

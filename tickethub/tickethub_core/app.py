@@ -204,6 +204,26 @@ def event_detail(event_id):
     )
 
 
+@app.route("/event/<int:event_id>/review-booking", methods=["POST"])
+@login_required
+def review_booking(event_id):
+    """Show booking confirmation prompt before purchasing."""
+    event = Event.query.get_or_404(event_id)
+    quantity = int(request.form.get("quantity", 1))
+
+    if quantity < 1:
+        flash("Quantity must be at least 1.", "error")
+        return redirect(url_for("event_detail", event_id=event_id))
+
+    if event.available_seats < quantity:
+        flash("Not enough seats available.", "error")
+        return redirect(url_for("event_detail", event_id=event_id))
+
+    total_price = round(event.price * quantity, 2)
+
+    return render_template("review_booking.html", event=event, quantity=quantity, total_price=total_price)
+
+
 @app.route("/event/<int:event_id>/book", methods=["POST"])
 @login_required
 def book_event(event_id):
@@ -252,7 +272,17 @@ def book_event(event_id):
     db.session.commit()
 
     flash(f"Successfully booked {quantity} ticket(s)!", "success")
-    return redirect(url_for("my_bookings"))
+    return redirect(url_for("booking_confirmation", booking_id=booking.id))
+
+
+@app.route("/booking/<int:booking_id>/confirmation")
+@login_required
+def booking_confirmation(booking_id):
+    """Show booking confirmation page after successful booking."""
+    booking = Booking.query.get_or_404(booking_id)
+    if booking.user_id != current_user.id:
+        abort(403)
+    return render_template("booking_confirmation.html", booking=booking)
 
 
 @app.route("/my-bookings")

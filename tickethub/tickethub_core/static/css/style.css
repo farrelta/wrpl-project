@@ -933,11 +933,14 @@ tbody tr:hover {
     display: flex;
     gap: 12px;
     margin-bottom: 32px;
+    justify-content: center;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .search-bar .form-control {
     flex: 1;
-    max-width: 400px;
 }
 
 /* ---- Hero Section ---- */
@@ -1123,6 +1126,182 @@ tbody tr:hover {
 .align-center { align-items: center; }
 .gap-2 { gap: 16px; }
 .gap-1 { gap: 8px; }
+
+/* ---- Booking Confirmation Page ---- */
+.confirmation-page {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 0 60px;
+}
+
+.confirmation-icon {
+    margin-bottom: 32px;
+}
+
+.confirmation-checkmark {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+.checkmark-svg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 2;
+    stroke: var(--success);
+    stroke-miterlimit: 10;
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
+}
+
+.checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: var(--success);
+    fill: none;
+    animation: checkmarkStroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    stroke-width: 3;
+    stroke-linecap: round;
+    animation: checkmarkStroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+}
+
+@keyframes checkmarkStroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.confirmation-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.03em;
+}
+
+.confirmation-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    margin-bottom: 40px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.7;
+}
+
+.confirmation-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.confirmation-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: rgba(124, 58, 237, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.confirmation-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.confirmation-ref {
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.confirmation-details {
+    padding: 8px 0;
+}
+
+.confirmation-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background var(--transition-fast);
+}
+
+.confirmation-detail-row:last-child {
+    border-bottom: none;
+}
+
+.confirmation-detail-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.confirmation-detail-row .detail-icon {
+    font-size: 1.3rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.confirmation-detail-row .detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.confirmation-detail-row .detail-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.confirmation-detail-row .detail-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.confirmation-detail-row.total-row {
+    background: rgba(124, 58, 237, 0.04);
+    padding: 20px 24px;
+}
+
+.confirmation-detail-row .detail-price {
+    font-size: 1.15rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {

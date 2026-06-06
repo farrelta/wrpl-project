@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmed — TicketHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="confirmation-page fade-in-up">
+        <!-- Success Animation -->
+        <div class="confirmation-icon">
+            <div class="confirmation-checkmark">
+                <svg viewBox="0 0 52 52" class="checkmark-svg">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="confirmation-title">Booking <span class="gradient-text">Confirmed!</span></h1>
+        <p class="confirmation-subtitle">Your tickets have been booked successfully. We've processed your payment and secured your seats.</p>
+
+        <!-- Booking Details Card -->
+        <div class="confirmation-card">
+            <div class="confirmation-card-header">
+                <span class="confirmation-label">Booking Reference</span>
+                <span class="confirmation-ref">#TH-{{ '%05d' % booking.id }}</span>
+            </div>
+
+            <div class="confirmation-details">
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">🎭</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Event</span>
+                        <span class="detail-value">{{ booking.event.name }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">📅</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Date & Time</span>
+                        <span class="detail-value">{{ booking.event.date.strftime('%A, %B %d, %Y at %I:%M %p') }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">📍</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Location</span>
+                        <span class="detail-value">{{ booking.event.location }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row">
+                    <span class="detail-icon">🎟️</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Tickets</span>
+                        <span class="detail-value">{{ booking.quantity }} ticket{{ 's' if booking.quantity != 1 }}</span>
+                    </div>
+                </div>
+
+                <div class="confirmation-detail-row total-row">
+                    <span class="detail-icon">💳</span>
+                    <div class="detail-content">
+                        <span class="detail-label">Total Paid</span>
+                        <span class="detail-value detail-price">${{ '%.2f' % booking.total_price }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="confirmation-actions">
+            <a href="{{ url_for('my_bookings') }}" class="btn btn-primary btn-lg">🎟️ View My Bookings</a>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">🏠 Browse More Events</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
